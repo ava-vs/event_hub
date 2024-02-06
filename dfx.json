@@ -1,0 +1,20 @@
+{
+  "canisters": {
+    "hub": {
+      "main": "src/Hub.mo",
+      "type": "motoko"
+    },
+    "evm_rpc": {
+      "type": "pull",
+      "id": "7hfb6-caaaa-aaaar-qadga-cai"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
