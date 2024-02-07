@@ -22,6 +22,10 @@ import Canister "utils/matcher/Canister";
 // import Evm "canister:evm_rpc";
 
 actor class Hub() = Self {
+    // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
+
+
+
     type EventField = E.EventField;
 
     type Event = E.Event;
@@ -98,7 +102,7 @@ actor class Hub() = Self {
         eventHub.subscribers.delete(principal);
     };
 
-    public shared ({ caller }) func emitEvent(event : E.Event) : async Types.Result<[(Nat, Nat)], Text> {
+    public shared ({ caller }) func emitEvent(event : E.Event) : async E.Result<[(Nat, Nat)], Text> {
         // let amount = Cycles.available();
         // if (amount < default_reputation_fee * 1_000 + 200_000_000_000) {
         //     return #Err("Not enough cycles to emit event");
@@ -206,7 +210,7 @@ actor class Hub() = Self {
         return true;
     };
 
-    func sendEvent(reviwer : ?Principal, event : E.Event, caller_doctoken_canister_id : Text, canisterId : Principal) : async Types.Result<[(Nat, Nat)], Text> {
+    func sendEvent(reviwer : ?Principal, event : E.Event, caller_doctoken_canister_id : Text, canisterId : Principal) : async E.Result<[(Nat, Nat)], Text> {
 
         // logger.append([prefix # "Starting method sendEvent"]);
         let subscriber_canister_id = Principal.toText(canisterId);
