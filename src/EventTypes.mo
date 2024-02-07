@@ -5,9 +5,19 @@ import Text "mo:base/Text";
 
 module {
 
+    public type Subscriber = {
+        callback : Principal; // subscriber's canister_id
+        filter : EventFilter;
+    };
+
     public type EventField = {
         name : Text;
         value : Blob;
+    };
+
+    public type EventFilter = {
+        eventType : ?EventName;
+        fieldFilters : [EventField];
     };
 
     public type EventName = {

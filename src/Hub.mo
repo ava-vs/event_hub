@@ -19,20 +19,20 @@ import List "utils/List";
 import Logger "utils/Logger";
 import Utils "utils/Utils";
 import Canister "utils/matcher/Canister";
-import Evm "canister:evm_rpc";
+// import Evm "canister:evm_rpc";
 
 actor class Hub() = Self {
     type EventField = E.EventField;
 
     type Event = E.Event;
 
-    type EventFilter = Types.EventFilter;
+    type EventFilter = E.EventFilter;
 
-    type RemoteCallEndpoint = Types.RemoteCallEndpoint;
+    // type RemoteCallEndpoint = Types.RemoteCallEndpoint;
 
-    type EncodedEventBatch = Types.EncodedEventBatch;
+    // type EncodedEventBatch = Types.EncodedEventBatch;
 
-    type Subscriber = Types.Subscriber;
+    type Subscriber = E.Subscriber;
 
     type EventName = E.EventName;
 
@@ -62,7 +62,7 @@ actor class Hub() = Self {
         var events : [E.Event] = [];
         subscribers : HashMap.HashMap<Principal, Subscriber> = HashMap.HashMap<Principal, Subscriber>(10, Principal.equal, Principal.hash);
     };
-    let userCanisterDocMap = HashMap.HashMap<Principal, [(CanisterId, DocId)]>(10, Principal.equal, Principal.hash);
+    // let userCanisterDocMap = HashMap.HashMap<Principal, [(CanisterId, DocId)]>(10, Principal.equal, Principal.hash);
 
     public func viewLogs(end : Nat) : async [Text] {
         let view = logger.view(0, end);
@@ -78,11 +78,11 @@ actor class Hub() = Self {
         true;
     };
 
-    public func getCategories() : async [(E.Category, Text)] {
-        let rep_canister : E.InstantReputationUpdateEvent = actor (rep_canister_id);
-        let tags = await rep_canister.getCategories();
-        tags;
-    };
+    // public func getCategories() : async [(E.Category, Text)] {
+    //     let rep_canister : E.InstantReputationUpdateEvent = actor (rep_canister_id);
+    //     let tags = await rep_canister.getCategories();
+    //     tags;
+    // };
 
     public shared func subscribe(subscriber : Subscriber) : async Bool {
         let amount = Cycles.available();
@@ -99,15 +99,15 @@ actor class Hub() = Self {
     };
 
     public shared ({ caller }) func emitEvent(event : E.Event) : async Types.Result<[(Nat, Nat)], Text> {
-        let amount = Cycles.available();
-        if (amount < default_reputation_fee * 1_000 + 200_000_000_000) {
-            return #Err("Not enough cycles to emit event");
-        };
-        ignore Cycles.accept(amount);
+        // let amount = Cycles.available();
+        // if (amount < default_reputation_fee * 1_000 + 200_000_000_000) {
+        //     return #Err("Not enough cycles to emit event");
+        // };
+        // ignore Cycles.accept(amount);
 
         // logger.append([prefix # "Starting method emitEvent"]);
         eventHub.events := Utils.pushIntoArray(event, eventHub.events);
-        updateUserCanisterDocMap(event);
+        // updateUserCanisterDocMap(event);
         let buffer = Buffer.Buffer<(Nat, Nat)>(0);
         for (subscriber in eventHub.subscribers.vals()) {
             // logger.append([prefix # "emitEvent: check subscriber " # Principal.toText(subscriber.callback) # " with filter " # subscriber.filter.fieldFilters[0].name]);
@@ -128,27 +128,27 @@ actor class Hub() = Self {
         return #Ok(Buffer.toArray<(Nat, Nat)>(buffer));
     };
 
-    public func getUserDocuments(principal : Principal) : async [(CanisterId, DocId)] {
-        switch (userCanisterDocMap.get(principal)) {
-            case (?array) {
-                return array;
-            };
-            case null { [] };
-        };
-    };
+    // public func getUserDocuments(principal : Principal) : async [(CanisterId, DocId)] {
+    //     switch (userCanisterDocMap.get(principal)) {
+    //         case (?array) {
+    //             return array;
+    //         };
+    //         case null { [] };
+    //     };
+    // };
 
-    func updateUserCanisterDocMap(event : E.Event) {
-        let existing = userCanisterDocMap.get(event.reputation_change.user);
-        switch (existing) {
-            case (?array) {
-                var newArray = Utils.pushIntoArray(event.reputation_change.source, array);
-                userCanisterDocMap.put(event.reputation_change.user, newArray);
-            };
-            case null {
-                userCanisterDocMap.put(event.reputation_change.user, [event.reputation_change.source]);
-            };
-        };
-    };
+    // func updateUserCanisterDocMap(event : E.Event) {
+    //     let existing = userCanisterDocMap.get(event.reputation_change.user);
+    //     switch (existing) {
+    //         case (?array) {
+    //             var newArray = Utils.pushIntoArray(event.reputation_change.source, array);
+    //             userCanisterDocMap.put(event.reputation_change.user, newArray);
+    //         };
+    //         case null {
+    //             userCanisterDocMap.put(event.reputation_change.user, [event.reputation_change.source]);
+    //         };
+    //     };
+    // };
 
     func eventNameToText(eventName : EventName) : Text {
         switch (eventName) {
@@ -301,7 +301,7 @@ actor class Hub() = Self {
     system func preupgrade() {
         eventState := eventHub.events;
         eventSubscribers := Iter.toArray(eventHub.subscribers.vals());
-        userCanisterDoc := Iter.toArray(userCanisterDocMap.entries());
+        // userCanisterDoc := Iter.toArray(userCanisterDocMap.entries());
     };
 
     system func postupgrade() {
@@ -311,9 +311,9 @@ actor class Hub() = Self {
             eventHub.subscribers.put(subscriber.callback, subscriber);
         };
         eventSubscribers := [];
-        for (user in userCanisterDoc.vals()) {
-            userCanisterDocMap.put(user.0, user.1);
-        };
-        userCanisterDoc := [];
+        // for (user in userCanisterDoc.vals()) {
+        //     userCanisterDocMap.put(user.0, user.1);
+        // };
+        // userCanisterDoc := [];
     };
 };
