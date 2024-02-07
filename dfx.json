@@ -1,6 +1,9 @@
 {
   "canisters": {
     "hub": {
+      "dependencies": [
+        "evm_rpc"
+      ],
       "main": "src/Hub.mo",
       "type": "motoko"
     },
