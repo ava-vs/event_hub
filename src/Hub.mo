@@ -19,6 +19,7 @@ import List "utils/List";
 import Logger "utils/Logger";
 import Utils "utils/Utils";
 import Canister "utils/matcher/Canister";
+import Sender "./EventSender";
 // import Evm "canister:evm_rpc";
 
 actor class Hub() = Self {
