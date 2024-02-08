@@ -20,10 +20,8 @@ import Logger "utils/Logger";
 import Utils "utils/Utils";
 import Canister "utils/matcher/Canister";
 import Sender "./EventSender";
-// import Evm "canister:evm_rpc";
 
 actor class Hub() = Self {
-    // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
 
     //eth types
     type RpcSource = Types.RpcSource;
@@ -127,6 +125,11 @@ actor class Hub() = Self {
         };
 
         return #Ok(Buffer.toArray<(Nat, Nat)>(buffer));
+    };
+
+    public func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async MultiGetLogsResult {
+        // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
+        let response = Sender.eth_getLogs(source, config, getLogArgs);
     };
 
     // public func getUserDocuments(principal : Principal) : async [(CanisterId, DocId)] {
