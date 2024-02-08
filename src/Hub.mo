@@ -27,7 +27,7 @@ actor class Hub() = Self {
     type RpcSource = Types.RpcSource;
     type RpcConfig = Types.RpcConfig;
     type GetLogsArgs = Types.GetLogsArgs;
-    type MultiGetLogsResult = Types.MultiGetLogsResult;
+    // type MultiGetLogsResult = Types.MultiGetLogsResult;
 
     type EventField = E.EventField;
 
@@ -127,9 +127,10 @@ actor class Hub() = Self {
         return #Ok(Buffer.toArray<(Nat, Nat)>(buffer));
     };
 
-    public func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async MultiGetLogsResult {
+    public func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
         // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
-        let response = Sender.eth_getLogs(source, config, getLogArgs);
+        let response = await Sender.eth_getLogs(source, config, getLogArgs);
+        return response;
     };
 
     // public func getUserDocuments(principal : Principal) : async [(CanisterId, DocId)] {
