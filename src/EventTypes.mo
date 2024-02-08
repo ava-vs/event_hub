@@ -21,6 +21,7 @@ module {
     };
 
     public type EventName = {
+        #EthEvent;
         #CreateEvent;
         #BurnEvent;
         #CollectionCreatedEvent;
@@ -70,6 +71,11 @@ module {
         #Err : E;
     };
 
+    public type EthEvent = actor {
+        handleEthEvent : Event -> async Result<Nat, Text>;
+        emitEthEvent : Event -> async Result<Nat, Text>;
+    };
+
     public type CreateEvent = actor {
         creation : Event -> async Result<[(Text, Text)], Text>;
     };
@@ -94,7 +100,6 @@ module {
         removeFromCollection : Event -> async Result<[(Text, Text)], Text>;
     };
     public type InstantReputationUpdateEvent = actor {
-        // updateDocHistory : (DocHistoryArgs) -> async Result<[(Text, Text)], Text>;
         getCategories : () -> async [(Category, Text)];
         getMintingAccount : () -> async Principal;
         eventHandler : (ReputationChangeRequest) -> async Result<Nat, Text>;
@@ -107,6 +112,7 @@ module {
     };
 
     public type Events = {
+        #EthEvent : EthEvent;
         #CreateEvent : CreateEvent;
         #BurnEvent : BurnEvent;
         #CollectionCreatedEvent : CollectionCreatedEvent;
@@ -121,6 +127,7 @@ module {
 
     public func textToEventName(text : Text) : EventName {
         switch (text) {
+            case ("EthEvent") return #EthEvent;
             case ("CreateEvent") return #CreateEvent;
             case ("BurnEvent") return #BurnEvent;
             case ("CollectionCreatedEvent") return #CollectionCreatedEvent;

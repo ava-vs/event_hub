@@ -9,7 +9,6 @@
     },
     "evm_rpc": {
       "type": "pull",
-      "candid": "deps/candid/7hfb6-caaaa-aaaar-qadga-cai.did",
       "id": "7hfb6-caaaa-aaaar-qadga-cai"
     }
   },

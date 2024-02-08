@@ -24,17 +24,17 @@ import Canister "utils/matcher/Canister";
 actor class Hub() = Self {
     // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
 
-
+    //eth types
+    type RpcSource = Types.RpcSource;
+    type RpcConfig = Types.RpcConfig;
+    type GetLogsArgs = Types.GetLogsArgs;
+    type MultiGetLogsResult = Types.MultiGetLogsResult;
 
     type EventField = E.EventField;
 
     type Event = E.Event;
 
     type EventFilter = E.EventFilter;
-
-    // type RemoteCallEndpoint = Types.RemoteCallEndpoint;
-
-    // type EncodedEventBatch = Types.EncodedEventBatch;
 
     type Subscriber = E.Subscriber;
 
@@ -49,10 +49,6 @@ actor class Hub() = Self {
     stable var state : Logger.State<Text> = Logger.new<Text>(0, null);
     let logger = Logger.Logger<Text>(state);
     let prefix = Utils.timestampToDate() # " ";
-
-    // For further batch handling
-    var batchMakingDurationNano : Int = 1_000_000_000;
-    var batchMaxSizeBytes : Nat = 500_000;
 
     let default_principal : Principal = Principal.fromText("aaaaa-aa");
     let rep_canister_id = "aoxye-tiaaa-aaaal-adgnq-cai";
@@ -89,11 +85,11 @@ actor class Hub() = Self {
     // };
 
     public shared func subscribe(subscriber : Subscriber) : async Bool {
-        let amount = Cycles.available();
-        if (amount < default_subscription_fee) {
-            return false;
-        };
-        ignore Cycles.accept(default_subscription_fee);
+        // let amount = Cycles.available();
+        // if (amount < default_subscription_fee) {
+        //     return false;
+        // };
+        // ignore Cycles.accept(default_subscription_fee);
         eventHub.subscribers.put(subscriber.callback, subscriber);
         true;
     };
@@ -156,6 +152,7 @@ actor class Hub() = Self {
 
     func eventNameToText(eventName : EventName) : Text {
         switch (eventName) {
+            case (#EthEvent) { "EthEvent" };
             case (#CreateEvent) { "CreateEvent" };
             case (#BurnEvent) { "BurnEvent" };
             case (#CollectionCreatedEvent) { "CollectionCreatedEvent" };
@@ -227,7 +224,7 @@ actor class Hub() = Self {
                 ]);
 
                 // Call eventHandler method from subscriber canister
-                Cycles.add(default_reputation_fee);
+                // Cycles.add(default_reputation_fee);
                 let response = await canister.eventHandler(args);
                 logger.append([prefix # "sendEvent: eventHandler method has been executed."]);
                 switch (response) {
@@ -237,6 +234,20 @@ actor class Hub() = Self {
                     )]);
                     case (#Err(msg)) {
                         return #Err("Update failed: " # msg);
+                    };
+                };
+            };
+            case (#EthEvent(_)) {
+                let canister : E.EthEvent = actor (subscriber_canister_id);
+                let response = await canister.emitEthEvent(event);
+                switch (response) {
+                    case (#Ok(res)) {
+                        // #Ok(tx, balance)
+                        return #Ok([(res, 0)]);
+
+                    };
+                    case (#Err(err)) {
+                        return #Err("Error in emitEthEvent: " # err);
                     };
                 };
             };

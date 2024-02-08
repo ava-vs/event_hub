@@ -5,8 +5,6 @@ import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 
-import E "./EventTypes";
-
 module {
 
   public type Auth = {
