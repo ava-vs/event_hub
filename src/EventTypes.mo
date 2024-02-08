@@ -1,6 +1,6 @@
-import Result "mo:base/Result";
-import Nat8 "mo:base/Nat8";
 import Bool "mo:base/Bool";
+import Nat8 "mo:base/Nat8";
+import Result "mo:base/Result";
 import Text "mo:base/Text";
 
 module {
@@ -111,19 +111,19 @@ module {
         feedbackSubmission : Event -> async Result<[(Text, Text)], Text>;
     };
 
-    public type Events = {
-        #EthEvent : EthEvent;
-        #CreateEvent : CreateEvent;
-        #BurnEvent : BurnEvent;
-        #CollectionCreatedEvent : CollectionCreatedEvent;
-        #CollectionUpdatedEvent : CollectionUpdatedEvent;
-        #CollectionDeletedEvent : CollectionDeletedEvent;
-        #AddToCollectionEvent : AddToCollectionEvent;
-        #RemoveFromCollectionEvent : RemoveFromCollectionEvent;
-        #InstantReputationUpdateEvent : InstantReputationUpdateEvent;
-        #AwaitingReputationUpdateEvent : AwaitingReputationUpdateEvent;
-        #FeedbackSubmissionEvent : FeedbackSubmissionEvent;
-    };
+    // public type Events = {
+    //     #EthEvent : EthEvent;
+    //     #CreateEvent : CreateEvent;
+    //     #BurnEvent : BurnEvent;
+    //     #CollectionCreatedEvent : CollectionCreatedEvent;
+    //     #CollectionUpdatedEvent : CollectionUpdatedEvent;
+    //     #CollectionDeletedEvent : CollectionDeletedEvent;
+    //     #AddToCollectionEvent : AddToCollectionEvent;
+    //     #RemoveFromCollectionEvent : RemoveFromCollectionEvent;
+    //     #InstantReputationUpdateEvent : InstantReputationUpdateEvent;
+    //     #AwaitingReputationUpdateEvent : AwaitingReputationUpdateEvent;
+    //     #FeedbackSubmissionEvent : FeedbackSubmissionEvent;
+    // };
 
     public func textToEventName(text : Text) : EventName {
         switch (text) {
@@ -141,6 +141,50 @@ module {
 
             case (_) #Unknown;
         };
+    };
+    // Answer types
+    public type CanisterId = Principal;
+    public type Answer = Text;
+
+    public type Success = {
+        canisterId : CanisterId;
+        result : (Nat, Nat);
+    };
+
+    public type Error = {
+        canisterId : CanisterId;
+        message : Text;
+    };
+
+    public type ErrorType = {
+        #CommunicationError;
+        #ProcessingError;
+        #Timeout;
+        #CustomError : Text;
+    };
+
+    public type SuccessfulSend = {
+        canisterId : CanisterId;
+    };
+
+    public type SendError = {
+        canisterId : CanisterId;
+        error : ErrorType;
+    };
+
+    public type SubscribersNotifiedResult = {
+        successful : [Success];
+        errors : [SendError];
+    };
+
+    public type AnswersResult = {
+        successful : [Success];
+        errors : [SendError];
+    };
+
+    public type EmitEventResult = {
+        #SubscribersNotified : SubscribersNotifiedResult;
+        #Answers : AnswersResult;
     };
 
 };

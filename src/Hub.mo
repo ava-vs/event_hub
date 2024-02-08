@@ -13,13 +13,13 @@ import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 
+import Sender "./EventSender";
 import E "./EventTypes";
 import Types "./Types";
 import List "utils/List";
 import Logger "utils/Logger";
-import Utils "utils/Utils";
 import Canister "utils/matcher/Canister";
-import Sender "./EventSender";
+import Utils "utils/Utils";
 
 actor class Hub() = Self {
 
@@ -116,7 +116,7 @@ actor class Hub() = Self {
 
                 var canister_doctoken = Principal.toText(caller);
                 if (Principal.fromText("2vxsx-fae") == caller) canister_doctoken := default_doctoken_canister_id;
-                let response = await sendEvent(event.reputation_change.reviewer, event, canister_doctoken, subscriber.callback);
+                let response = await sendEvent(event, canister_doctoken, subscriber.callback);
                 switch (response) {
                     case (#Ok(array)) { buffer.add(array[0]) };
                     case (#Err(err)) { return #Err(err) };
@@ -126,6 +126,65 @@ actor class Hub() = Self {
 
         return #Ok(Buffer.toArray<(Nat, Nat)>(buffer));
     };
+
+    /*
+    * new emitEvent
+    */
+    public shared ({ caller }) func emitEventGeneral(event : E.Event) : async E.EmitEventResult {
+        // Add event to the event log
+        eventHub.events := Utils.pushIntoArray(event, eventHub.events);
+
+        let successes = Buffer.Buffer<E.Success>(0); // Buffer for successful sends
+        let errors = Buffer.Buffer<E.SendError>(0); // Buffer for errors
+
+        // Iterate over subscribers
+        for (subscriber in eventHub.subscribers.vals()) {
+            if (isEventMatchFilter(event, subscriber.filter)) {
+                // Log matching event and filter
+                // logger.append([prefix # "emitEvent: event matched"]);
+
+                // Prepare canister_doctoken based on the caller
+                var canister_doctoken = Principal.toText(caller);
+                if (Principal.fromText("2vxsx-fae") == caller) {
+                    canister_doctoken := default_doctoken_canister_id;
+                };
+
+                // Send event to subscriber and handle response
+                let response = await sendEvent(event, canister_doctoken, subscriber.callback);
+                switch (response) {
+                    case (#Ok(result)) {
+                        // Add to the success buffer
+                        successes.add({
+                            canisterId = subscriber.callback;
+                            result = result[0];
+                        });
+                    };
+                    case (#Err(message)) {
+                        // Add to the error buffer
+                        errors.add({
+                            canisterId = subscriber.callback;
+                            error = #CustomError(message);
+                        });
+                    };
+                };
+            };
+        };
+
+        // Return results based on the responseType
+
+        let notifiedResults = {
+            successful = Buffer.toArray(successes);
+            errors = Buffer.toArray(errors);
+        };
+        // let responseType = switch (event.reputation_change.reviewer) {
+        //     case (null) { #SubscribersNotified };
+        //     case (?_) { #Answers };
+        // };
+        return #SubscribersNotified(notifiedResults);
+
+    };
+
+    //__________________________________________________
 
     public func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
         // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
@@ -212,7 +271,7 @@ actor class Hub() = Self {
         return true;
     };
 
-    func sendEvent(reviwer : ?Principal, event : E.Event, caller_doctoken_canister_id : Text, canisterId : Principal) : async E.Result<[(Nat, Nat)], Text> {
+    func sendEvent(event : E.Event, caller_doctoken_canister_id : Text, canisterId : Principal) : async E.Result<[(Nat, Nat)], Text> {
 
         // logger.append([prefix # "Starting method sendEvent"]);
         let subscriber_canister_id = Principal.toText(canisterId);
