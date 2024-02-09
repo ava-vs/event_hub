@@ -43,6 +43,8 @@ module {
         #Text : Text;
         #Blob : Blob;
         #Bool : Bool;
+        #Array : [Metadata];
+        #Map : [(Text, Metadata)];
     };
 
     public type ReputationChangeRequest = {
@@ -144,7 +146,10 @@ module {
     };
     // Answer types
     public type CanisterId = Principal;
-    public type Answer = Text;
+    public type Answer = {
+        canisterId : CanisterId;
+        result : [(Text, Metadata)];
+    };
 
     public type Success = {
         canisterId : CanisterId;
@@ -178,7 +183,7 @@ module {
     };
 
     public type AnswersResult = {
-        successful : [Success];
+        successful : [Answer];
         errors : [SendError];
     };
 

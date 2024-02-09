@@ -3,5 +3,5 @@ target/
 .dfx/
 deps/
 .mops/
-
+src/test_Hub.mo
 *.generated.did
