@@ -156,20 +156,11 @@ module {
         result : (Nat, Nat);
     };
 
-    public type Error = {
-        canisterId : CanisterId;
-        message : Text;
-    };
-
     public type ErrorType = {
         #CommunicationError;
         #ProcessingError;
         #Timeout;
         #CustomError : Text;
-    };
-
-    public type SuccessfulSend = {
-        canisterId : CanisterId;
     };
 
     public type SendError = {
