@@ -192,6 +192,11 @@ actor class Hub() = Self {
         return response;
     };
 
+    public func callEthgetBlockByNumber(source : RpcSource, config : ?RpcConfig, blockTag : Types.BlockTag) : async Types.MultiGetBlockByNumberResult {
+        let response = await Sender.eth_getBlockByNumber(source, config, blockTag);
+        return response;
+    };
+
     // public func getUserDocuments(principal : Principal) : async [(CanisterId, DocId)] {
     //     switch (userCanisterDocMap.get(principal)) {
     //         case (?array) {
