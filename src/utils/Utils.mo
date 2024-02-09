@@ -88,7 +88,7 @@ module {
         };
     };
 
-    // convert timestamp from Int to date   
+    // convert timestamp from Int to date
 
     public func timestampToDate() : Text {
         let start2024 = Time.now() - 1_704_067_200_000_000_000;
@@ -142,5 +142,13 @@ module {
         let ggg = Text.fromChar(chars[6]) # Text.fromChar(chars[7]) # Text.fromChar(chars[8]);
         return Text.join(".", [s, ff, nnn, ggg].vals());
     };
-
+    // convert Event topics to Ethereum event topics
+    public func convertEventTopicsToEthereumTopics(eventTopics : [E.EventField]) : [Blob] {
+        let topics = Buffer.Buffer<Blob>(eventTopics.size());
+        for (i in eventTopics.vals()) {
+            topics.add(i.value);
+        };
+        return Buffer.toArray(topics);
+    };
+    
 };

@@ -8,7 +8,7 @@ module {
     type GetLogsArgs = Types.GetLogsArgs;
     // type MultiGetLogsResult = Types.MultiGetLogsResult;
     type EthLogResponse = Types.LogEntry;
-    let default_fee = 1_000_000_000;
+    let default_fee = 2_000_000_000;
 
     public func eth_getLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
         Cycles.add(default_fee);
