@@ -10,8 +10,8 @@ import Array "mo:base/Array";
 
 import E "../EventTypes";
 module {
-    public func getValueFromMetadata(key : Text, metadata : ?[(Text, E.Metadata)]) : ?E.Metadata {
-        switch (metadata) {
+    public func getValueFromValue(key : Text, value : ?[(Text, E.Value)]) : ?E.Value {
+        switch (value) {
             case (null) { null };
             case (?entries) {
                 for ((k, value) in entries.vals()) {
@@ -24,7 +24,7 @@ module {
         };
     };
 
-    public func getNat8ValueFromMetadata(value : ?E.Metadata) : Nat8 {
+    public func getNat8ValueFromValue(value : ?E.Value) : Nat8 {
         switch (value) {
             case (null) { 0 };
             case (?v) {
@@ -43,12 +43,12 @@ module {
                     };
                     case (#Map(map)) {
                         if (map.size() > 0) {
-                            getNat8ValueFromMetadata(?map.get(0).1);
+                            getNat8ValueFromValue(?map.get(0).1);
                         } else 0;
                     };
                     case (#Array(arr)) {
                         if (arr.size() > 0) {
-                            getNat8ValueFromMetadata(?arr[0]);
+                            getNat8ValueFromValue(?arr[0]);
                         } else 0;
                     };
                 };
@@ -57,7 +57,7 @@ module {
         };
     };
 
-    public func getTextValueFromMetadata(value : ?E.Metadata) : Text {
+    public func getTextValueFromValue(value : ?E.Value) : Text {
         switch (value) {
             case (null) { "" };
             case (?v) {
@@ -70,14 +70,14 @@ module {
                     case (#Map(map)) {
                         var result : Text = "";
                         for ((k, v) in map.vals()) {
-                            result := result # " " # k # ":" #getTextValueFromMetadata(?v);
+                            result := result # " " # k # ":" #getTextValueFromValue(?v);
                         };
                         result;
                     };
                     case (#Array(arr)) {
                         var result : Text = "";
                         for (value in arr.vals()) {
-                            result := result # " " # getTextValueFromMetadata(?value);
+                            result := result # " " # getTextValueFromValue(?value);
                         };
                         result;
                     };
@@ -88,7 +88,7 @@ module {
         };
     };
 
-    // convert date prefix from Int to date
+    // convert timestamp from Int to date   
 
     public func timestampToDate() : Text {
         let start2024 = Time.now() - 1_704_067_200_000_000_000;

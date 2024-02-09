@@ -36,15 +36,15 @@ module {
         #Unknown;
     };
 
-    public type Metadata = {
+    public type Value = {
         #Nat : Nat;
         #Nat8 : Nat8;
         #Int : Int;
         #Text : Text;
         #Blob : Blob;
         #Bool : Bool;
-        #Array : [Metadata];
-        #Map : [(Text, Metadata)];
+        #Array : [Value];
+        #Map : [(Text, Value)];
     };
 
     public type ReputationChangeRequest = {
@@ -55,7 +55,7 @@ module {
         timestamp : Nat;
         source : (Text, Nat); // (doctoken_canisterId, documentId)
         comment : ?Text;
-        metadata : ?[(Text, Metadata)];
+        metadata : ?[(Text, Value)];
     };
 
     public type Event = {
@@ -148,7 +148,7 @@ module {
     public type CanisterId = Principal;
     public type Answer = {
         canisterId : CanisterId;
-        result : [(Text, Metadata)];
+        result : [(Text, Value)];
     };
 
     public type Success = {

@@ -8,21 +8,28 @@ module {
     type GetLogsArgs = Types.GetLogsArgs;
     // type MultiGetLogsResult = Types.MultiGetLogsResult;
     type EthLogResponse = Types.LogEntry;
-    let default_fee = 300_000_000;
+    let default_fee = 1_000_000_000;
 
     public func eth_getLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
         Cycles.add(default_fee);
         let response = await Evm.eth_getLogs(source, config, getLogArgs);
         // parse response before return
-        let parsedResponse = await parseMultiGetLogsResult(response);
+        let parsedResponse = await _parseMultiGetLogsResult(response);
         return response;
     };
 
-    public func parseMultiGetLogsResult(result : Types.MultiGetLogsResult) : async [EthLogResponse] {
+    func _parseMultiGetLogsResult(result : Types.MultiGetLogsResult) : async [EthLogResponse] {
         switch (result) {
             case (#Consistent(#Ok(logs))) { logs };
             case (#Consistent(#Err(_))) { [] };
             case (#Inconsistent(_)) { [] };
         };
+    };
+
+    //eth_getBlockByNumber : (RpcSource, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
+    public func eth_getBlockByNumber(source : RpcSource, config : ?RpcConfig, blockTag : Types.BlockTag) : async Types.MultiGetBlockByNumberResult {
+        Cycles.add(default_fee);
+        let response = await Evm.eth_getBlockByNumber(source, config, blockTag);
+        return response;
     };
 };
