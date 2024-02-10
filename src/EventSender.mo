@@ -1,5 +1,7 @@
 import Evm "canister:evm_rpc";
+
 import Cycles "mo:base/ExperimentalCycles";
+
 import Types "./Types";
 
 module {
@@ -26,10 +28,15 @@ module {
         };
     };
 
-    //eth_getBlockByNumber : (RpcSource, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
     public func eth_getBlockByNumber(source : RpcSource, config : ?RpcConfig, blockTag : Types.BlockTag) : async Types.MultiGetBlockByNumberResult {
         Cycles.add(default_fee);
         let response = await Evm.eth_getBlockByNumber(source, config, blockTag);
+        return response;
+    };
+
+    public func eth_sendRawTransaction(source : RpcSource, config : ?RpcConfig, rawTx : Text) : async Types.MultiSendRawTransactionResult {
+        Cycles.add(default_fee);
+        let response = await Evm.eth_sendRawTransaction(source, config, rawTx);
         return response;
     };
 };

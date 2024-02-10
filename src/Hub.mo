@@ -1,3 +1,9 @@
+/**
+ * @desc This file contains the implementation of the `Hub` actor class.
+ * The `Hub` class is responsible for managing events, subscribers, and emitting events to subscribers.
+ * It also provides functions for interacting with Ethereum RPC methods.
+ */
+
 import Array "mo:base/Array";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
@@ -21,6 +27,9 @@ import Logger "utils/Logger";
 import Canister "utils/matcher/Canister";
 import Utils "utils/Utils";
 
+/**
+ * @desc The `Hub` actor class manages events, subscribers, and emits events to subscribers.
+ */
 actor class Hub() = Self {
 
     //eth types
@@ -55,13 +64,13 @@ actor class Hub() = Self {
     let default_receiver_canister_id = default_doctoken_canister_id;
     let default_reputation_fee = 550_000_000;
     let default_subscription_fee = 500_000_000_000;
+
     // subscriber : <canisterId , filter>
 
     var eventHub = {
         var events : [E.Event] = [];
         subscribers : HashMap.HashMap<Principal, Subscriber> = HashMap.HashMap<Principal, Subscriber>(10, Principal.equal, Principal.hash);
     };
-    // let userCanisterDocMap = HashMap.HashMap<Principal, [(CanisterId, DocId)]>(10, Principal.equal, Principal.hash);
 
     public func viewLogs(end : Nat) : async [Text] {
         let view = logger.view(0, end);
@@ -77,12 +86,6 @@ actor class Hub() = Self {
         true;
     };
 
-    // public func getCategories() : async [(E.Category, Text)] {
-    //     let rep_canister : E.InstantReputationUpdateEvent = actor (rep_canister_id);
-    //     let tags = await rep_canister.getCategories();
-    //     tags;
-    // };
-
     public shared func subscribe(subscriber : Subscriber) : async Bool {
         // let amount = Cycles.available();
         // if (amount < default_subscription_fee) {
@@ -97,6 +100,11 @@ actor class Hub() = Self {
         eventHub.subscribers.delete(principal);
     };
 
+    // This function emits an event to all subscribed subscribers and returns the result.
+    // It takes an event as input and checks if the caller has enough cycles to emit the event.
+    // If the caller has enough cycles, it adds the event to the eventHub and sends the event to all matching subscribers.
+    // The function returns the result of sending the event to the subscribers.
+
     public shared ({ caller }) func emitEvent(event : E.Event) : async E.Result<[(Nat, Nat)], Text> {
         // let amount = Cycles.available();
         // if (amount < default_reputation_fee * 1_000 + 200_000_000_000) {
@@ -106,7 +114,6 @@ actor class Hub() = Self {
 
         // logger.append([prefix # "Starting method emitEvent"]);
         eventHub.events := Utils.pushIntoArray(event, eventHub.events);
-        // updateUserCanisterDocMap(event);
         let buffer = Buffer.Buffer<(Nat, Nat)>(0);
         for (subscriber in eventHub.subscribers.vals()) {
             // logger.append([prefix # "emitEvent: check subscriber " # Principal.toText(subscriber.callback) # " with filter " # subscriber.filter.fieldFilters[0].name]);
@@ -128,7 +135,11 @@ actor class Hub() = Self {
     };
 
     /*
-    * new emitEvent
+    * General emitEvent
+    * Description: Emits a general event to all subscribed callbacks and handles the responses.
+    * Parameters:
+    * - event: The event to be emitted.
+    * Returns: An EmitEventResult indicating the arrays of success or failure of the event emission.
     */
     public shared ({ caller }) func emitEventGeneral(event : E.Event) : async E.EmitEventResult {
         // Add event to the event log
@@ -144,13 +155,13 @@ actor class Hub() = Self {
                 // logger.append([prefix # "emitEvent: event matched"]);
 
                 // Prepare canister_doctoken based on the caller
-                var canister_doctoken = Principal.toText(caller);
+                var caller_id = Principal.toText(caller);
                 if (Principal.fromText("2vxsx-fae") == caller) {
-                    canister_doctoken := default_doctoken_canister_id;
+                    caller_id := default_doctoken_canister_id;
                 };
 
                 // Send event to subscriber and handle response
-                let response = await sendEvent(event, canister_doctoken, subscriber.callback);
+                let response = await sendEvent(event, caller_id, subscriber.callback);
                 switch (response) {
                     case (#Ok(result)) {
                         // Add to the success buffer
@@ -184,43 +195,29 @@ actor class Hub() = Self {
 
     };
 
-    //__________________________________________________
+    /*
+   * Ethereum RPC methods
+   */
 
-    public func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
+    func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
         // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
         let response = await Sender.eth_getLogs(source, config, getLogArgs);
         return response;
     };
 
-    public func callEthgetBlockByNumber(source : RpcSource, config : ?RpcConfig, blockTag : Types.BlockTag) : async Types.MultiGetBlockByNumberResult {
+    func callEthgetBlockByNumber(source : RpcSource, config : ?RpcConfig, blockTag : Types.BlockTag) : async Types.MultiGetBlockByNumberResult {
         let response = await Sender.eth_getBlockByNumber(source, config, blockTag);
         return response;
     };
 
-    // public func getUserDocuments(principal : Principal) : async [(CanisterId, DocId)] {
-    //     switch (userCanisterDocMap.get(principal)) {
-    //         case (?array) {
-    //             return array;
-    //         };
-    //         case null { [] };
-    //     };
-    // };
-
-    // func updateUserCanisterDocMap(event : E.Event) {
-    //     let existing = userCanisterDocMap.get(event.reputation_change.user);
-    //     switch (existing) {
-    //         case (?array) {
-    //             var newArray = Utils.pushIntoArray(event.reputation_change.source, array);
-    //             userCanisterDocMap.put(event.reputation_change.user, newArray);
-    //         };
-    //         case null {
-    //             userCanisterDocMap.put(event.reputation_change.user, [event.reputation_change.source]);
-    //         };
-    //     };
-    // };
+    func callEthsendRawTransaction(source : RpcSource, config : ?RpcConfig, rawTx : Text) : async Types.MultiSendRawTransactionResult {
+        let response = await Sender.eth_sendRawTransaction(source, config, rawTx);
+        return response;
+    };
 
     func eventNameToText(eventName : EventName) : Text {
         switch (eventName) {
+            case (#NewCanisterEvent) { "NewCanisterEvent" };
             case (#EthEvent) { "EthEvent" };
             case (#CreateEvent) { "CreateEvent" };
             case (#BurnEvent) { "BurnEvent" };
@@ -276,7 +273,12 @@ actor class Hub() = Self {
         return true;
     };
 
-    func sendEvent(event : E.Event, caller_doctoken_canister_id : Text, canisterId : Principal) : async E.Result<[(Nat, Nat)], Text> {
+    /*
+    * Sends an event to a subscriber canister and handles the response.
+    * Returns a result containing a list of event IDs and corresponding balances,
+    * or an error text message if the update failed.
+    */
+    func sendEvent(event : E.Event, caller_canister_id : Text, canisterId : Principal) : async E.Result<[(Nat, Nat)], Text> {
 
         // logger.append([prefix # "Starting method sendEvent"]);
         let subscriber_canister_id = Principal.toText(canisterId);
@@ -289,12 +291,12 @@ actor class Hub() = Self {
                 let rep_value = Nat.toText(Option.get<Nat>(args.value, 0));
                 logger.append([
                     prefix # "sendEvent: args created, user=" # Principal.toText(args.user) # " token Id = " # Nat.toText(args.source.1)
-                    # " caller_doctoken_canister_id = " # args.source.0 # " value = " # rep_value # " comment " # Option.get<Text>(args.comment, "null")
+                    # " caller_canister_id = " # args.source.0 # " value = " # rep_value # " comment " # Option.get<Text>(args.comment, "null")
                 ]);
 
                 // Call eventHandler method from subscriber canister
                 // Cycles.add(default_reputation_fee);
-                let response = await canister.eventHandler(args);
+                let response : E.Result<Nat, Text> = await canister.eventHandler(args);
                 logger.append([prefix # "sendEvent: eventHandler method has been executed."]);
                 switch (response) {
                     case (#Ok(balance)) return #Ok([(
@@ -307,6 +309,7 @@ actor class Hub() = Self {
                 };
             };
             case (#EthEvent(_)) {
+                //TODO: Add the logic to handle EthEvent
                 let canister : E.EthEvent = actor (subscriber_canister_id);
                 let response = await canister.emitEthEvent(event);
                 switch (response) {
@@ -320,6 +323,25 @@ actor class Hub() = Self {
                     };
                 };
             };
+            // public type NewCanisterEvent = actor {
+            //  newCanister : (Event) -> async EmitEventResult;
+            //};
+            case (#NewCanisterEvent(_)) {
+                let canister : E.NewCanisterEvent = actor (subscriber_canister_id);
+                let response = await canister.newCanister(event);
+                switch (response) {
+                    case (#SubscribersNotified(result)) {
+
+                        // TODO change return type to EmitEventResult,  expression of type   [Success] cannot produce expected type   [(Nat, Nat)]
+                        //return #Ok(result.successful);
+                        return #Ok(Array.map<E.Success, (Nat, Nat)>(result.successful, func(x : E.Success) : (Nat, Nat) { (0, 0) }));
+                    };
+                    case (#Answers(result)) {
+                        return #Ok(Array.map<E.Answer, (Nat, Nat)>(result.successful, func(x : E.Answer) : (Nat, Nat) { (0, 0) }));
+                    };
+                };
+            };
+
             // case (#AwaitingReputationUpdateEvent(_)) {
             //     let canister : E.AwaitingReputationUpdateEvent = actor (subscriber_canister_id);
             //     let response = await canister.updateReputation(event);
@@ -331,7 +353,7 @@ actor class Hub() = Self {
         };
     };
 
-    public func getAllSubscribers() : async [Subscriber] {
+    public shared ({ caller }) func getAllSubscribers() : async [Subscriber] {
         Iter.toArray(eventHub.subscribers.vals());
     };
 
@@ -378,6 +400,9 @@ actor class Hub() = Self {
         );
     };
 
+    /*
+    * Upgrade canister methods
+    */
     stable var eventState : [E.Event] = [];
     stable var eventSubscribers : [Subscriber] = [];
     stable var userCanisterDoc : [(Principal, [(CanisterId, Nat)])] = [];
@@ -385,7 +410,6 @@ actor class Hub() = Self {
     system func preupgrade() {
         eventState := eventHub.events;
         eventSubscribers := Iter.toArray(eventHub.subscribers.vals());
-        // userCanisterDoc := Iter.toArray(userCanisterDocMap.entries());
     };
 
     system func postupgrade() {
@@ -395,9 +419,5 @@ actor class Hub() = Self {
             eventHub.subscribers.put(subscriber.callback, subscriber);
         };
         eventSubscribers := [];
-        // for (user in userCanisterDoc.vals()) {
-        //     userCanisterDocMap.put(user.0, user.1);
-        // };
-        // userCanisterDoc := [];
     };
 };
