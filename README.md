@@ -13,6 +13,7 @@ This canister provides methods for subscribing to events, unsubscribing from eve
 **Event Hub** also provides interoperability with Ethereum RPC methods and uses flexible event types and custom filters.
  
 ## Overview:
+![Event_Hub](https://github.com/ava-vs/event_hub/assets/30374212/e29abbbf-2d5f-4bdf-a981-4403f8aedbac)
 
 ### Functions:
 - Subscriber Management: Functions for subscribing (subscribe) and unsubscribing (unsubscribe) actors to events are implemented, as well as functions for getting a list of all subscribers (getAllSubscribers) and subscribers with certain filters (getSubscribers).
@@ -28,12 +29,14 @@ This canister provides methods for subscribing to events, unsubscribing from eve
 #### Case 1 ("A new NFT Canister", it can be part of the standard)
 Wallets subscribe to the canister event of the ICRC-7 standard in the hub, and when a new canister starts issuing NFTs of that standard and sends an event about it to the hub, all subscribers receive a new NFT source canister ID and can search for NFTs there by address or number.
 
+![New_NFT_Canister](https://github.com/ava-vs/event_hub/assets/30374212/146fe23c-9fa9-40bc-9e23-8c9234ce7bd8)
 
 
 #### Case 2 ("Ethereum Event")
 The canister subscribes to an event in the Ethereum network. The hub periodically checks for the occurrence of this event using the evm_rpc call and notifies the subscriber when it occurs.
 
 
+![Eth_handle](https://github.com/ava-vs/event_hub/assets/30374212/844b2035-3db6-4714-a078-a43bc2319922)
 
 #### Case 3 ("Verified Event with Reputation", already implemented by aVa Reputation) 
 Online school issues a digital certificate as NFT for graduatee and create special event. 
@@ -45,6 +48,9 @@ User received certificate with reputation.Online school issues digital certifica
 aVa reputation canister gets this event notification with token and some reputation points added to certificate. 
 
 User gets certificate with reputation.
+
+![reputation_event](https://github.com/ava-vs/event_hub/assets/30374212/9c99c316-3a66-44b9-91f4-0700210920a4)
+
 
 ## Project Roadmap 
 
