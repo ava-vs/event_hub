@@ -46,7 +46,7 @@ aVa reputation canister gets this event notification with token and some reputat
 
 User gets certificate with reputation.
 
-#### Next steps 
+## Project Roadmap 
 
 - Develop full version of **Event Hub** and get it into production
  
