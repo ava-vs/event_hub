@@ -2,6 +2,7 @@ import Bool "mo:base/Bool";
 import Nat8 "mo:base/Nat8";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
+import Canister "utils/matcher/Canister";
 
 module {
 
@@ -21,6 +22,7 @@ module {
     };
 
     public type EventName = {
+        #NewCanisterEvent;
         #EthEvent;
         #CreateEvent;
         #BurnEvent;
@@ -47,6 +49,30 @@ module {
         #Map : [(Text, Value)];
     };
 
+    public type SimpleEvent = {
+        eventType : EventName;
+        name : Text;
+        topics : [EventField];
+        details : ?Text;
+        publisher : Principal;
+        document : ?Text;
+        sender_hash : ?Text;
+        metadata : ?[(Text, Value)];
+        issue_at : ?Nat;
+        expire_at : Nat;
+    };
+
+    public type EventReceipt = {
+        date : Nat64;
+        event : SimpleEvent;
+        result : EmitEventResult;
+    };
+
+    public type GeneralEvent = {
+        #WithReputationChange : Event;
+        #WithoutReputationChange : SimpleEvent;
+    };
+
     public type ReputationChangeRequest = {
         user : Principal;
         reviewer : ?Principal;
@@ -71,6 +97,10 @@ module {
     public type Result<S, E> = {
         #Ok : S;
         #Err : E;
+    };
+
+    public type NewCanisterEvent = actor {
+        newCanister : (Event) -> async EmitEventResult;
     };
 
     public type EthEvent = actor {
@@ -129,6 +159,7 @@ module {
 
     public func textToEventName(text : Text) : EventName {
         switch (text) {
+            case ("NewCanisterEvent") return #NewCanisterEvent;
             case ("EthEvent") return #EthEvent;
             case ("CreateEvent") return #CreateEvent;
             case ("BurnEvent") return #BurnEvent;

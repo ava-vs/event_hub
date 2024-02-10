@@ -155,13 +155,13 @@ actor class Hub() = Self {
                 // logger.append([prefix # "emitEvent: event matched"]);
 
                 // Prepare canister_doctoken based on the caller
-                var canister_doctoken = Principal.toText(caller);
+                var caller_id = Principal.toText(caller);
                 if (Principal.fromText("2vxsx-fae") == caller) {
-                    canister_doctoken := default_doctoken_canister_id;
+                    caller_id := default_doctoken_canister_id;
                 };
 
                 // Send event to subscriber and handle response
-                let response = await sendEvent(event, canister_doctoken, subscriber.callback);
+                let response = await sendEvent(event, caller_id, subscriber.callback);
                 switch (response) {
                     case (#Ok(result)) {
                         // Add to the success buffer
@@ -277,7 +277,7 @@ actor class Hub() = Self {
     * Returns a result containing a list of event IDs and corresponding balances,
     * or an error text message if the update failed.
     */
-    func sendEvent(event : E.Event, caller_doctoken_canister_id : Text, canisterId : Principal) : async E.Result<[(Nat, Nat)], Text> {
+    func sendEvent(event : E.Event, caller_canister_id : Text, canisterId : Principal) : async E.Result<[(Nat, Nat)], Text> {
 
         // logger.append([prefix # "Starting method sendEvent"]);
         let subscriber_canister_id = Principal.toText(canisterId);
@@ -290,12 +290,12 @@ actor class Hub() = Self {
                 let rep_value = Nat.toText(Option.get<Nat>(args.value, 0));
                 logger.append([
                     prefix # "sendEvent: args created, user=" # Principal.toText(args.user) # " token Id = " # Nat.toText(args.source.1)
-                    # " caller_doctoken_canister_id = " # args.source.0 # " value = " # rep_value # " comment " # Option.get<Text>(args.comment, "null")
+                    # " caller_canister_id = " # args.source.0 # " value = " # rep_value # " comment " # Option.get<Text>(args.comment, "null")
                 ]);
 
                 // Call eventHandler method from subscriber canister
                 // Cycles.add(default_reputation_fee);
-                let response = await canister.eventHandler(args);
+                let response : Result<Nat, Text> = await canister.eventHandler(args);
                 logger.append([prefix # "sendEvent: eventHandler method has been executed."]);
                 switch (response) {
                     case (#Ok(balance)) return #Ok([(
@@ -322,6 +322,19 @@ actor class Hub() = Self {
                     };
                 };
             };
+            // public type NewCanisterEvent = actor {
+      //  newCanister : (Event) -> async EmitEventResult;
+    //};
+            case (#NewCanisterEvent(_)) {
+                let canister : E.NewCanisterEvent = actor (subscriber_canister_id);
+                let response = await canister.newCanister(event);
+                switch (response) {
+                    case (#SubscribersNotified(result)) {
+                        return #Ok(result.successful);
+                    };
+                };
+            };
+            
             // case (#AwaitingReputationUpdateEvent(_)) {
             //     let canister : E.AwaitingReputationUpdateEvent = actor (subscriber_canister_id);
             //     let response = await canister.updateReputation(event);
