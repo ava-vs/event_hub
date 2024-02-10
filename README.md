@@ -16,7 +16,8 @@ This canister provides methods for subscribing to events, unsubscribing from eve
 
 ### Functions:
 - Subscriber Management: Functions for subscribing (subscribe) and unsubscribing (unsubscribe) actors to events are implemented, as well as functions for getting a list of all subscribers (getAllSubscribers) and subscribers with certain filters (getSubscribers).
-- Generating and sending events: Includes functions to generate events (emitEvent, emitEventGeneral) and send them to subscribers. Events are filtered according to the set subscriber filters.- Ethereum Interaction: Functions are provided for calling Ethereum RPC methods (callEthgetLogs, callEthgetBlockByNumber, callEthsendRawTransaction).
+- Generating and sending events: Includes functions to generate events (emitEvent, emitEventGeneral) and send them to subscribers. Events are filtered according to the set subscriber filters.
+- Ethereum Interaction: Functions are provided for calling Ethereum RPC methods (callEthgetLogs, callEthgetBlockByNumber, callEthsendRawTransaction).
 - Canister Update: The state of the hub is stable and is not lost when the canister is updated.- Logging: The code provides a logging system to track events and operations within an actor.
 
 **Event Hub** is a complete solution for event management in the context of Internet Computer, supporting both intra-network and Ethereum blockchain interactions.
