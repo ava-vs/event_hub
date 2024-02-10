@@ -136,36 +136,52 @@ actor class Hub() = Self {
     // Ethereum RPC methods
     public func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
         let response = await Sender.eth_getLogs(source, config, getLogArgs);
-        return #Consistent(response);
+        return response;
     };
 
     public func callEthgetBlockByNumber(source : RpcSource, config : ?RpcConfig, blockTag : Types.BlockTag) : async Types.MultiGetBlockByNumberResult {
         let response = await Sender.eth_getBlockByNumber(source, config, blockTag);
-        return #Consistent(response);
+        return response;
     };
 
     public func callEthsendRawTransaction(source : RpcSource, config : ?RpcConfig, rawTx : Text) : async Types.MultiSendRawTransactionResult {
         let response = await Sender.eth_sendRawTransaction(source, config, rawTx);
-        return #Consistent(response);
+        return response;
     };
 
     // Helper functions
     private func isEventMatchFilter(event : Event, filter : EventFilter) : Bool {
-        if (filter.eventType != null) {
-            if (filter.eventType != event.eventType) {
+        switch (filter.eventType) {
+            case (null) {
+                // true for null filter
+                //logger.append([prefix # "isEventMatchFilter: Event type is null"]);
+                return true;
+            };
+            case (?t) if (t != event.eventType) {
+                // logger.append([prefix # "isEventMatchFilter: Event type does not match: " # eventNameToText(event.eventType) # " and " # eventNameToText(t)]);
                 return false;
             };
         };
-        for (field in filter.fieldFilters) {
-            if (not isFieldInEvent(field, event)) {
+        // logger.append([prefix # " isEventMatchFilter: event topic 1: name = " # event.topics[0].name # " , value = " # Nat8.toText(Blob.toArray(event.topics[0].value)[0])]);
+        for (field in filter.fieldFilters.vals()) {
+            logger.append([prefix # "isEventMatchFilter: Checking field", field.name, Nat8.toText(Blob.toArray(field.value)[0])]);
+            let found = Array.find<EventField>(
+                event.topics,
+                func(topic : EventField) : Bool {
+                    topic.name == field.name and topic.value == field.value
+                },
+            );
+            if (found == null) {
+                logger.append([prefix # "isEventMatchFilter: Field not found", field.name]);
                 return false;
             };
         };
+        logger.append([prefix # "isEventMatchFilter: Event matched"]);
         return true;
     };
 
     private func isFieldInEvent(field : EventField, event : Event) : Bool {
-        for (eventField in event.topics) {
+        for (eventField in event.topics.vals()) {
             if (field.name == eventField.name & (field.value == eventField.value)) {
                 return true;
             };
@@ -174,9 +190,67 @@ actor class Hub() = Self {
     };
 
     private func sendEvent(event : Event, canister_doctoken : Text, canister_id : Principal) : async E.Result<[(Nat, Nat)], Text> {
-        let canister = Canister.Canister<CanisterId, DocId, E.Event, E.Result<[(Nat, Nat)], Text>>(canister_id);
-        let result = await canister.eventHandler(event);
-        return result;
+        let subscriber_canister_id = Principal.toText(canisterId);
+        switch (event.eventType) {
+            case (#InstantReputationUpdateEvent(_)) {
+                logger.append([prefix # "sendEvent: case #InstantReputationUpdateEvent, start updateDocHistory"]);
+                let canister : E.InstantReputationUpdateEvent = actor (subscriber_canister_id);
+                // logger.append([prefix # "sendEvent: canister created"]);
+                let args : E.ReputationChangeRequest = event.reputation_change;
+                let rep_value = Nat.toText(Option.get<Nat>(args.value, 0));
+                logger.append([
+                    prefix # "sendEvent: args created, user=" # Principal.toText(args.user) # " token Id = " # Nat.toText(args.source.1)
+                    # " caller_canister_id = " # args.source.0 # " value = " # rep_value # " comment " # Option.get<Text>(args.comment, "null")
+                ]);
+
+                // Call eventHandler method from subscriber canister
+                // Cycles.add(default_reputation_fee);
+                let response : Result<Nat, Text> = await canister.eventHandler(args);
+                logger.append([prefix # "sendEvent: eventHandler method has been executed."]);
+                switch (response) {
+                    case (#Ok(balance)) return #Ok([(
+                        args.source.1,
+                        balance,
+                    )]);
+                    case (#Err(msg)) {
+                        return #Err("Update failed: " # msg);
+                    };
+                };
+            };
+            case (#EthEvent(_)) {
+                //TODO: Add the logic to handle EthEvent
+                let canister : E.EthEvent = actor (subscriber_canister_id);
+                let response = await canister.emitEthEvent(event);
+                switch (response) {
+                    case (#Ok(res)) {
+                        // #Ok(tx, balance)
+                        return #Ok([(res, 0)]);
+
+                    };
+                    case (#Err(err)) {
+                        return #Err("Error in emitEthEvent: " # err);
+                    };
+                };
+            };
+            case (#NewCanisterEvent(_)) {
+                let canister : E.NewCanisterEvent = actor (subscriber_canister_id);
+                let response = await canister.newCanister(event);
+                switch (response) {
+                    case (#SubscribersNotified(result)) {
+                        return #Ok(result.successful);
+                    };
+                };
+            };
+
+            // case (#AwaitingReputationUpdateEvent(_)) {
+            //     let canister : E.AwaitingReputationUpdateEvent = actor (subscriber_canister_id);
+            //     let response = await canister.updateReputation(event);
+            // };
+            // TODO Add other types here
+            case _ {
+                return #Err("Unknown Event Type");
+            };
+        };
     };
 
     // Querying events
@@ -186,7 +260,7 @@ actor class Hub() = Self {
 
     // Querying subscribers
     public func getSubscribers() : async [E.Subscriber] {
-        let subscribers = Array.init<Subscriber>(eventHub.subscribers.size(), { callback = default_principal; filter = { eventType = null; fieldFilters = [] } });
+        let subscribers : E.Subscriber = Array.init<Subscriber>(eventHub.subscribers.size(), { callback = default_principal; filter = { eventType = null; fieldFilters = [] } });
         var i = 0;
         for (subscriber in eventHub.subscribers.vals()) {
             subscribers[i] := subscriber;

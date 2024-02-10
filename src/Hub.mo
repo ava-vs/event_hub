@@ -217,6 +217,7 @@ actor class Hub() = Self {
 
     func eventNameToText(eventName : EventName) : Text {
         switch (eventName) {
+            case (#NewCanisterEvent) { "NewCanisterEvent" };
             case (#EthEvent) { "EthEvent" };
             case (#CreateEvent) { "CreateEvent" };
             case (#BurnEvent) { "BurnEvent" };
@@ -295,7 +296,7 @@ actor class Hub() = Self {
 
                 // Call eventHandler method from subscriber canister
                 // Cycles.add(default_reputation_fee);
-                let response : Result<Nat, Text> = await canister.eventHandler(args);
+                let response : E.Result<Nat, Text> = await canister.eventHandler(args);
                 logger.append([prefix # "sendEvent: eventHandler method has been executed."]);
                 switch (response) {
                     case (#Ok(balance)) return #Ok([(
@@ -323,18 +324,24 @@ actor class Hub() = Self {
                 };
             };
             // public type NewCanisterEvent = actor {
-      //  newCanister : (Event) -> async EmitEventResult;
-    //};
+            //  newCanister : (Event) -> async EmitEventResult;
+            //};
             case (#NewCanisterEvent(_)) {
                 let canister : E.NewCanisterEvent = actor (subscriber_canister_id);
                 let response = await canister.newCanister(event);
                 switch (response) {
                     case (#SubscribersNotified(result)) {
-                        return #Ok(result.successful);
+
+                        // TODO change return type to EmitEventResult,  expression of type   [Success] cannot produce expected type   [(Nat, Nat)]
+                        //return #Ok(result.successful);
+                        return #Ok(Array.map<E.Success, (Nat, Nat)>(result.successful, func(x : E.Success) : (Nat, Nat) { (0, 0) }));
+                    };
+                    case (#Answers(result)) {
+                        return #Ok(Array.map<E.Answer, (Nat, Nat)>(result.successful, func(x : E.Answer) : (Nat, Nat) { (0, 0) }));
                     };
                 };
             };
-            
+
             // case (#AwaitingReputationUpdateEvent(_)) {
             //     let canister : E.AwaitingReputationUpdateEvent = actor (subscriber_canister_id);
             //     let response = await canister.updateReputation(event);
