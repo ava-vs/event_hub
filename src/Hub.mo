@@ -111,8 +111,6 @@ actor class Hub() = Self {
         //     return #Err("Not enough cycles to emit event");
         // };
         // ignore Cycles.accept(amount);
-
-        // logger.append([prefix # "Starting method emitEvent"]);
         eventHub.events := Utils.pushIntoArray(event, eventHub.events);
         let buffer = Buffer.Buffer<(Nat, Nat)>(0);
         for (subscriber in eventHub.subscribers.vals()) {
@@ -151,9 +149,6 @@ actor class Hub() = Self {
         // Iterate over subscribers
         for (subscriber in eventHub.subscribers.vals()) {
             if (isEventMatchFilter(event, subscriber.filter)) {
-                // Log matching event and filter
-                // logger.append([prefix # "emitEvent: event matched"]);
-
                 // Prepare canister_doctoken based on the caller
                 var caller_id = Principal.toText(caller);
                 if (Principal.fromText("2vxsx-fae") == caller) {
@@ -200,7 +195,6 @@ actor class Hub() = Self {
    */
 
     func callEthgetLogs(source : RpcSource, config : ?RpcConfig, getLogArgs : GetLogsArgs) : async Types.MultiGetLogsResult {
-        // eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
         let response = await Sender.eth_getLogs(source, config, getLogArgs);
         return response;
     };
@@ -239,9 +233,6 @@ actor class Hub() = Self {
     };
 
     func isEventMatchFilter(event : E.Event, filter : EventFilter) : Bool {
-
-        // logger.append([prefix # "Starting method isEventMatchFilter"]);
-
         // logger.append([prefix # " isEventMatchFilter: Checking subsriber's event type", eventNameToText(Option.get<E.EventName>(filter.eventType, #Unknown))]);
         // logger.append([prefix # " with event type: ", eventNameToText(event.eventType)]);
         switch (filter.eventType) {
@@ -253,8 +244,6 @@ actor class Hub() = Self {
                 return false;
             };
         };
-        // logger.append([prefix # " isEventMatchFilter: Event type matched"]);
-        // logger.append([prefix # " isEventMatchFilter: Checking subsriber's field filters"]);
         // logger.append([prefix # " isEventMatchFilter: event topic 1: name = " # event.topics[0].name # " , value = " # Nat8.toText(Blob.toArray(event.topics[0].value)[0])]);
         for (field in filter.fieldFilters.vals()) {
             logger.append([prefix # "isEventMatchFilter: Checking field", field.name, Nat8.toText(Blob.toArray(field.value)[0])]);
@@ -309,13 +298,36 @@ actor class Hub() = Self {
                 };
             };
             case (#EthEvent(_)) {
-                //TODO: Add the logic to handle EthEvent
-                let canister : E.EthEvent = actor (subscriber_canister_id);
-                let response = await canister.emitEthEvent(event);
-                switch (response) {
+                // let canister : E.EthEvent = actor (subscriber_canister_id);
+                // let response = await canister.emitEthEvent(event);
+                //TODO: remove temp Demo code
+                let address = ["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"];
+                let topic1 = "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c";
+                let topic2 = "0x0000000000000000000000003fc91a3afd70395cd496c647d5a6cc9d4b2b7fad";
+                let fromBlock = 19188367;
+                let toBlock = 19188368;
+                let topics = [topic1, topic2];
+                let getLogArgs : Types.GetLogsArgs = {
+                    addresses = address;
+                    fromBlock = ? #Number(fromBlock);
+                    toBlock = ? #Number(toBlock);
+                    topics = ?[topics];
+                };
+                let source : Types.RpcSource = (#EthMainnet(?[#Cloudflare]));
+                let responseTemp : Types.MultiGetLogsResult = await callEthgetLogs(source, null, getLogArgs);
+                var result = #Ok([]);
+                switch (responseTemp) {
+                    case (#Consistent(#Ok(res))) {
+                        result := #Ok([]);
+                    };
+                    case (_) {
+                        return #Err("Error in eth_getLogs");
+                    };
+                };
+                switch (result) {
                     case (#Ok(res)) {
                         // #Ok(tx, balance)
-                        return #Ok([(res, 0)]);
+                        return #Ok([(8, 0)]);
 
                     };
                     case (#Err(err)) {
@@ -323,15 +335,11 @@ actor class Hub() = Self {
                     };
                 };
             };
-            // public type NewCanisterEvent = actor {
-            //  newCanister : (Event) -> async EmitEventResult;
-            //};
             case (#NewCanisterEvent(_)) {
                 let canister : E.NewCanisterEvent = actor (subscriber_canister_id);
                 let response = await canister.newCanister(event);
                 switch (response) {
                     case (#SubscribersNotified(result)) {
-
                         // TODO change return type to EmitEventResult,  expression of type   [Success] cannot produce expected type   [(Nat, Nat)]
                         //return #Ok(result.successful);
                         return #Ok(Array.map<E.Success, (Nat, Nat)>(result.successful, func(x : E.Success) : (Nat, Nat) { (0, 0) }));
@@ -341,11 +349,6 @@ actor class Hub() = Self {
                     };
                 };
             };
-
-            // case (#AwaitingReputationUpdateEvent(_)) {
-            //     let canister : E.AwaitingReputationUpdateEvent = actor (subscriber_canister_id);
-            //     let response = await canister.updateReputation(event);
-            // };
             // TODO Add other types here
             case _ {
                 return #Err("Unknown Event Type");
