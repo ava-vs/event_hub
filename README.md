@@ -1,10 +1,50 @@
 # Motoko Event Hub 
 
-This repository contains the implementation of the Event Hub in [Motoko](https://github.com/dfinity/motoko) programming language for [Internet Computer](https://internetcomputer.org/). 
+This repository contains the implementation of the **Event Hub** in [Motoko](https://github.com/dfinity/motoko) programming language for [Internet Computer](https://internetcomputer.org/). 
 
-The Event Hub is responsible for managing events, subscribers, and emitting events to subscribers. 
+## Summary:
 
-It is possible to track events on the Ethereum blockchain using Ethereum RPC methods.
+
+
+**Event Hub** is a canister for managing events, subscribers, and sending events to subscribers.
+
+This canister contains methods for subscribing to events, unsubscribing, viewing and clearing event logs, and generating and sending events to subscribers.  
+
+Event Hub also provides interoperability with Ethereum RPC methods and uses flexible event types and custom filters.
+ 
+## Overview:
+
+### Functions:
+- Subscriber Management: Functions for subscribing (subscribe) and unsubscribing (unsubscribe) actors to events are implemented, as well as functions for getting a list of all subscribers (getAllSubscribers) and subscribers with certain filters (getSubscribers).
+- Generating and sending events: Includes functions to generate events (emitEvent, emitEventGeneral) and send them to subscribers. Events are filtered according to the set subscriber filters.- Ethereum Interaction: Functions are provided for calling Ethereum RPC methods (callEthgetLogs, callEthgetBlockByNumber, callEthsendRawTransaction).
+- Canister Update: The state of the hub is stable and is not lost when the canister is updated.- Logging: The code provides a logging system to track events and operations within an actor.
+
+**Event Hub** is a complete solution for event management in the context of Internet Computer, supporting both intra-network and Ethereum blockchain interactions.
+
+### Use case examples
+
+#### Case 1 ("A new NFT Canister", it can be part of the standard)
+Wallets subscribe to the canister event of the ICRC-7 standard in the hub, and when a new canister starts issuing NFTs of that standard and sends an event about it to the hub, all subscribers receive a new NFT source canister ID and can search for NFTs there by address or number.
+
+
+
+#### Case 2 ("Ethereum Event")
+The canister subscribes to an event in the Ethereum network. The hub periodically checks for the occurrence of this event using the evm_rpc call and notifies the subscriber when it occurs.
+
+
+
+#### Case 3 ("Verified Event with Reputation", already implemented by aVa Reputation) 
+Online school issues a digital certificate as NFT for graduatee and create special event. 
+aVa Reputation canister gets this event notification with token and some reputation points add to certificate. 
+User received certificate with reputation.Online school issues digital certificate as NFT for graduate and creates special event. 
+aVa reputation canister gets this event notification with token and some reputation points added to certificate. 
+User gets certificate with reputation.
+
+#### Next steps 
+- Develop a hub and get it into production,
+- Gather and implement the community's wishes for the events they want,
+- Create a decentralised autonomous organisation (DAO) and hand over the management of the hub to it.
+
 
 ## Features
 
@@ -15,16 +55,16 @@ It is possible to track events on the Ethereum blockchain using Ethereum RPC met
 ## Usage
 
 ```candid "Type definitions" +=
-type Value = variant { 
-    Blob : blob; 
-    Bool : bool;
-    Text : text; 
-    Nat : nat;
-    Nat8 : nat8;
-    Int : int;
-    Array : vec Value; 
-    Map : vec record { text; Value }; 
-};
+    type Value = variant { 
+        Blob : blob; 
+        Bool : bool;
+        Text : text; 
+        Nat : nat;
+        Nat8 : nat8;
+        Int : int;
+        Array : vec Value; 
+        Map : vec record { text; Value }; 
+    };
     
     type EventName = variant {
         #EthEvent;
@@ -133,15 +173,23 @@ Contributions are welcome. Please submit a pull request or open an issue to disc
 ### License
 This project is licensed under the terms of the MIT license.
 
+## Deploy
 
+### Mainnet
+```bash
+cd event_hub
+dfx deploy --ic
+```
 
-#### Start the local replica
+#### Local
+```bash
 dfx start --background
+```
 
 #### Locally deploy the `evm_rpc` canister
+```bash
 dfx deps pull
 dfx deps init evm_rpc --argument '(record { nodesInSubnet = 28 })'
 dfx deps deploy
-
-### Deploy
 dfx deploy
+```
