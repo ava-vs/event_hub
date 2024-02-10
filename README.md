@@ -36,22 +36,31 @@ The canister subscribes to an event in the Ethereum network. The hub periodicall
 
 #### Case 3 ("Verified Event with Reputation", already implemented by aVa Reputation) 
 Online school issues a digital certificate as NFT for graduatee and create special event. 
+
 aVa Reputation canister gets this event notification with token and some reputation points add to certificate. 
+
 User received certificate with reputation.Online school issues digital certificate as NFT for graduate and creates special event. 
+
 aVa reputation canister gets this event notification with token and some reputation points added to certificate. 
+
 User gets certificate with reputation.
 
 #### Next steps 
-- Develop a hub and get it into production,
-- Gather and implement the community's wishes for the events they want,
-- Create a decentralised autonomous organisation (DAO) and hand over the management of the hub to it.
+
+- Develop full version of **Event Hub** and get it into production
+ 
+- Gather and implement the community's wishes for the events they want
+ 
+- Create a decentralised autonomous organisation (DAO) and hand over the management of **Event Hub** to it.
 
 
 ## Features
 
-**Event management**: The Event Hub can emit events to all subscribed subscribers and return the result.
-**Subscription management**: The Event Hub can manage subscribers, allowing them to subscribe and unsubscribe.
-**Ethereum RPC methods**: The Event Hub can interact with Ethereum RPC methods.
+**Event management**: The **Event Hub** can emit events to all subscribed subscribers and return the result.
+
+**Subscription management**: The **Event Hub** can manage subscribers, allowing them to subscribe and unsubscribe.
+
+**Ethereum RPC methods**: The **Event Hub** can interact with Ethereum RPC methods via [evm_rpc](https://github.com/internet-computer-protocol/evm-rpc-canister) canister.
 
 ## Usage
 
@@ -68,6 +77,7 @@ User gets certificate with reputation.
     };
     
     type EventName = variant {
+        #NewCanisterEvent;
         #EthEvent;
         #CreateEvent;
         #BurnEvent;
@@ -168,13 +178,7 @@ The Event Hub provides functions for interacting with Ethereum RPC methods. Thes
 ### Dependencies
 This project depends on [evm_rpc canister](https://github.com/internet-computer-protocol/evm-rpc-canister).
 
-### Contributing
-Contributions are welcome. Please submit a pull request or open an issue to discuss your ideas.
-
-### License
-This project is licensed under the terms of the MIT license.
-
-## Deploy
+## Deployment
 
 ### Mainnet
 ```bash
@@ -194,3 +198,8 @@ dfx deps init evm_rpc --argument '(record { nodesInSubnet = 28 })'
 dfx deps deploy
 dfx deploy
 ```
+### Contributing
+Contributions are welcome. Please submit a pull request or open an issue to discuss your ideas.
+
+### License
+This project is licensed under the terms of the MIT license.
