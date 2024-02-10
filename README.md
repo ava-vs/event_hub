@@ -8,9 +8,9 @@ This repository contains the implementation of the **Event Hub** in [Motoko](htt
 
 **Event Hub** is a canister for managing events, subscribers, and sending events to subscribers.
 
-This canister contains methods for subscribing to events, unsubscribing, viewing and clearing event logs, and generating and sending events to subscribers.  
+This canister provides methods for subscribing to events, unsubscribing from events, viewing and clearing event logs, and generating and sending events to subscribers.
 
-Event Hub also provides interoperability with Ethereum RPC methods and uses flexible event types and custom filters.
+**Event Hub** also provides interoperability with Ethereum RPC methods and uses flexible event types and custom filters.
  
 ## Overview:
 
