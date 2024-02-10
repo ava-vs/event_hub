@@ -4,9 +4,9 @@ This repository contains the implementation of the **Event Hub** in [Motoko](htt
 
 ## Summary:
 
+In the IC ecosystem, with its diverse set of decentralized applications (canisters), there's a critical need for an efficient mechanism to manage and disseminate events to multiple stakeholders. 
 
-
-**Event Hub** is a canister for managing events, subscribers, and sending events to subscribers.
+**Event Hub** is a node for managing events, subscribers, and sending events to subscribers.
 
 This canister provides methods for subscribing to events, unsubscribing from events, viewing and clearing event logs, and generating and sending events to subscribers.
 
