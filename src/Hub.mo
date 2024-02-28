@@ -100,6 +100,14 @@ actor class Hub() = Self {
         eventHub.subscribers.delete(principal);
     };
 
+    public func getSubscriberFilters() : async [EventFilter] {
+        let result = Buffer.Buffer<EventFilter>(0);
+        for (filter in eventHub.subscribers.vals()) {
+            result.add(filter.filter);
+        };
+        Buffer.toArray(result);
+    };
+
     // This function emits an event to all subscribed subscribers and returns the result.
     // It takes an event as input and checks if the caller has enough cycles to emit the event.
     // If the caller has enough cycles, it adds the event to the eventHub and sends the event to all matching subscribers.
@@ -273,7 +281,7 @@ actor class Hub() = Self {
         let subscriber_canister_id = Principal.toText(canisterId);
         switch (event.eventType) {
             case (#InstantReputationUpdateEvent(_)) {
-                logger.append([prefix # "sendEvent: case #InstantReputationUpdateEvent, start updateDocHistory"]);
+                logger.append([prefix # "sendEvent: case #InstantReputationUpdateEvent, start eventHandler"]);
                 let canister : E.InstantReputationUpdateEvent = actor (subscriber_canister_id);
                 // logger.append([prefix # "sendEvent: canister created"]);
                 let args : E.ReputationChangeRequest = event.reputation_change;
