@@ -139,6 +139,11 @@ emitEventGeneral: (Event) ->  EmitEventResult;
     };
 ```
 
+### Private and Public Events
+By default, an event has public status and any canister can subscribe to it.
+However, it is possible to publish private events if the publisher adds an allowlist of subscribers to the event.
+The allowlist should contain the canister ids of future subscribers.
+
 ### Ethereum RPC methods
 The Event Hub provides functions for interacting with Ethereum RPC methods. These functions include callEthgetLogs, callEthgetBlockByNumber, and callEthsendRawTransaction.
 
