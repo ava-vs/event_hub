@@ -121,6 +121,24 @@ Events can be emitted to all subscribed subscribers using the emitEvent function
 emitEventGeneral: (Event) ->  EmitEventResult;
 ```
 
+### Event Types Samples
+```candid "Type definitions" +=
+    public type NewsEvent = actor {
+        news : (Event) -> async ();
+    };
+
+    public type InstantReputationUpdateEvent = actor {
+        getCategories : () -> async [(Category, Text)];
+        getMintingAccount : () -> async Principal;
+        eventHandler : (ReputationChangeRequest) -> async Result<Nat, Text>;
+    };
+
+    public type EthEvent = actor {
+        handleEthEvent : (EthEvent) -> async Result<[Key, Value], Text>;
+        emitEthEvent : (EthEvent) -> async Result<[Key, Value], Text>;
+    };
+```
+
 ### Ethereum RPC methods
 The Event Hub provides functions for interacting with Ethereum RPC methods. These functions include callEthgetLogs, callEthgetBlockByNumber, and callEthsendRawTransaction.
 
