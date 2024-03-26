@@ -49,6 +49,15 @@ module {
         #Map : [(Text, Value)];
     };
 
+    public type GenericEvent = {
+        eventFilter : [EventFilter];
+        publisher : Principal;
+        issue_at : Nat64;
+        expire_at : ?Nat64;
+        metadata : [(Text, Value)];
+        details : ?Text;
+    };
+
     public type SimpleEvent = {
         eventType : EventName;
         name : Text;
@@ -103,6 +112,12 @@ module {
         newCanister : (Event) -> async EmitEventResult;
     };
 
+    public type InstantReputationUpdateEvent = actor {
+        getCategories : () -> async [(Category, Text)];
+        getMintingAccount : () -> async Principal;
+        eventHandler : (ReputationChangeRequest) -> async Result<Nat, Text>;
+    };
+
     public type EthEvent = actor {
         handleEthEvent : Event -> async Result<Nat, Text>;
         emitEthEvent : Event -> async Result<Nat, Text>;
@@ -130,11 +145,6 @@ module {
     };
     public type RemoveFromCollectionEvent = actor {
         removeFromCollection : Event -> async Result<[(Text, Text)], Text>;
-    };
-    public type InstantReputationUpdateEvent = actor {
-        getCategories : () -> async [(Category, Text)];
-        getMintingAccount : () -> async Principal;
-        eventHandler : (ReputationChangeRequest) -> async Result<Nat, Text>;
     };
     public type AwaitingReputationUpdateEvent = actor {
         updateReputation : Event -> async Result<[(Text, Text)], Text>;
@@ -212,6 +222,22 @@ module {
     public type EmitEventResult = {
         #SubscribersNotified : SubscribersNotifiedResult;
         #Answers : AnswersResult;
+    };
+
+    // Ethereum Event Types
+    public type EthereumEventDetails = {
+        blockHash : ?Text;
+        transactionHash : ?Text;
+        logIndex : ?Nat;
+        // Добавьте другие специфичные для Ethereum поля, если необходимо
+    };
+
+    public type EthereumEvent = {
+        eventType : EventName;
+        topics : [EventField];
+        details : ?Text;
+        ethDetails : EthereumEventDetails;
+        sender_hash : ?Text;
     };
 
 };

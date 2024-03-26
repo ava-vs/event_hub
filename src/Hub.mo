@@ -26,6 +26,7 @@ import List "utils/List";
 import Logger "utils/Logger";
 import Canister "utils/matcher/Canister";
 import Utils "utils/Utils";
+import HubInterface "./HubInterface";
 
 /**
  * @desc The `Hub` actor class manages events, subscribers, and emits events to subscribers.
@@ -106,6 +107,29 @@ actor class Hub() = Self {
             result.add(filter.filter);
         };
         Buffer.toArray(result);
+    };
+
+    public shared func subscribeWithFilter(subscriber : Principal, filter : EventFilter) : async Bool {
+        let sub : Subscriber = {
+            callback = subscriber;
+            filter = filter;
+        };
+        eventHub.subscribers.put(subscriber, sub);
+        return true;
+    };
+
+    public shared func unsubscribeAll(subscriber : Principal) : async () {
+        eventHub.subscribers.delete(subscriber);
+    };
+
+    public shared query func getSubscriptions(subscriber : Principal) : async [EventFilter] {
+        let result = Buffer.Buffer<EventFilter>(0);
+        for ((p, sub) in eventHub.subscribers.entries()) {
+            if (p == subscriber) {
+                result.add(sub.filter);
+            };
+        };
+        return Buffer.toArray(result);
     };
 
     // This function emits an event to all subscribed subscribers and returns the result.
@@ -196,6 +220,19 @@ actor class Hub() = Self {
         // };
         return #SubscribersNotified(notifiedResults);
 
+    };
+
+    public shared ({ caller }) func emitEthEvent(event : E.EthEvent) : async E.Result<[(Nat, Nat)], Text> {
+        // Handle Ethereum event
+        if (event.ethDetails.blockHash == null or event.ethDetails.transactionHash == null) {
+            return #Err("Missing required Ethereum event details");
+        };
+
+        let result = await emitEvent(event);
+
+        //add more actions for Ethereum event if needed
+
+        return result;
     };
 
     /*
@@ -431,4 +468,65 @@ actor class Hub() = Self {
         };
         eventSubscribers := [];
     };
+
+    // public issueEvent(
+    //     eventFilter : E.EventFilter,
+    //     publisher : Principal,
+    //     details : ?Text,
+    //     start_at : Int,
+    //     expire_at : ?Int,
+    //     metadata : [(Text, E.Value)],
+    // ) {
+    //     var event : E.Event = {
+    //         eventType = #Unknown;
+    //         topics = [];
+    //         publisher = publisher;
+    //         details = details;
+    //         start_at = start_at;
+    //         expire_at = expire_at;
+    //         metadata = metadata;
+    //     };
+    //     // eventHub.events := Utils.pushIntoArray(event, eventHub.events);
+    //     // for (subscriber in eventHub.subscribers.vals()) {
+    //     //     if (isEventMatchFilter(event, subscriber.filter)) {
+    //     //         let canister_doctoken = Principal.toText(caller);
+    //     //         if (Principal.fromText("2vxsx-fae") == caller) canister_doctoken := default_doctoken_canister_id;
+    //     //         let response = await sendEvent(event, canister_doctoken, subscriber.callback);
+    //     //         switch (response) {
+    //     //             case (#Ok(array)) {};
+    //     //             case (#Err(err)) {};
+    //     //         };
+    //     //     };
+    //     // };
+    // };
+
+    public createGenericEvent(
+        eventType : E.EventName,
+        filter : [E.EventField],
+        publisher : Principal,
+        metadata : [(Text, E.Value)],
+        details : ?Text,
+        start_at : Nat64,
+        expiresAt : ?Nat64
+    ) {
+        var event : E.Event = {
+            eventType = eventType;
+            topics = filter;
+            publisher = publisher;
+            details = details;
+            start_at = start_at;
+            expire_at = expiresAt;
+            metadata = metadata;
+        };
+        var result = emitEvent(event);
+        var w = switch (result) {
+            case (#Ok(_)) {
+                return #Ok("Event emitted successfully");
+            };
+            case (#Err(err)) {
+                return #Err("Error emitting event: " # err);
+            };
+        };
+    };
+
 };
